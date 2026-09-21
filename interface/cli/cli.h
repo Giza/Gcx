@@ -19,7 +19,7 @@ private:
 	int argc;
 	char** argv;
 	int currentArg = 1;
-	CLI::COMMAND command;
+	CLI::COMMAND command = CLI::DECOMPILE;
 	bool exportRes = false;
 
 	void printUsage();

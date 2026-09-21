@@ -1,8 +1,9 @@
 #include "decompiler.h"
 
-Decompiler::Decompiler(const GcxProc& proc, std::string procName) {
+Decompiler::Decompiler(const GcxProc& proc, std::string procName, Gcx* gcx) {
 	this->procBuffer = proc;
 	this->procName = procName;
+	this->gcx = gcx;
 }
 
 Decompiler::~Decompiler() {
@@ -246,8 +247,19 @@ void Decompiler::readEval() {
 	int start = ptr;
 
 	if (!isInline) { indentation.printIndent(); }
-	std::cout << "@proc";
-	readShort();
+	if (gcx && gcx->hasProcHashes()) {
+		uint32_t hash = *(uint32_t*)&procBuffer[ptr] & 0x00FFFFFF;
+		ptr += 3;
+		int idx = gcx->getProcIndexFromHash(hash);
+		if (idx != -1) {
+			std::cout << "@proc" << std::dec << (idx + 1);
+		} else {
+			std::cout << "@proc_" << std::hex << hash << std::dec;
+		}
+	} else {
+		std::cout << "@proc";
+		readShort();
+	}
 
 	processFor(start, size);
 	printNewLine();
@@ -402,7 +414,20 @@ void Decompiler::processType() {
 	case 0x04: readUByte();		break;
 	case 0x06: readStrCode();	break;
 	case 0x07: readString();	break;
-	case 0x08: readUShort();	break;
+	case 0x08:
+		if (gcx && gcx->hasProcHashes()) {
+			uint32_t hash = *(uint32_t*)&procBuffer[ptr] & 0x00FFFFFF;
+			ptr += 3;
+			int idx = gcx->getProcIndexFromHash(hash);
+			if (idx != -1) {
+				std::cout << "proc" << std::dec << (idx + 1);
+			} else {
+				std::cout << "proc_" << std::hex << hash << std::dec;
+			}
+		} else {
+			readUShort();
+		}
+		break;
 	case 0x09: readLong();		break;
 	case 0x0A: readULong();		break;
 	case 0x0D: readArray();		break;
@@ -478,7 +503,12 @@ uint8_t Decompiler::getTag() {
 
 void Decompiler::process() {
 	uint8_t tag = getTag();
+	int old_ptr = ptr;
 	tag ? processTag(tag) : processType();
+	if (ptr == old_ptr) {
+		std::cerr << "Decompiler STUCK at ptr=" << ptr << " byte=0x" << std::hex << (int)procBuffer[ptr] << " tag=0x" << (int)tag << std::dec << " in " << procName << std::endl;
+		ptr++;
+	}
 }
 
 void Decompiler::decompile() {

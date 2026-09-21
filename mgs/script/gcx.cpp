@@ -91,14 +91,46 @@ void Gcx::setProc() {
 	mainProcStart = &procStart[mainProcOffset + 4];
 }
 
+bool Gcx::hasProcHashes() {
+	return hashTable != nullptr;
+}
+
+uint32_t Gcx::getProcHash(int idx) {
+	if (!hashTable) return 0;
+	return hashTable[idx];
+}
+
+int Gcx::getProcIndexFromHash(uint32_t hash) {
+	auto it = procHashMap.find(hash & 0x00FFFFFF);
+	if (it != procHashMap.end()) {
+		return it->second;
+	}
+	return -1;
+}
+
 void Gcx::open() {
 	timestamp = (uint32_t*)gcxData;
 	procTable = (int32_t*)&gcxData[4];
 	setNumProc();
 
-	blockStart  = (uint8_t*)(&procTable[numProc + 1]);
+	int32_t* nextTable = &procTable[numProc + 1];
+	GcxBlockHeader* candidateHeader = (GcxBlockHeader*)nextTable;
+
+	procHashMap.clear();
+	if (candidateHeader->resourceTableOffset == 0x14) {
+		blockStart = (uint8_t*)nextTable;
+		hashTable = nullptr;
+	} else {
+		hashTable = (uint32_t*)nextTable;
+		int i = 0;
+		while (nextTable[i] != -1) {
+			procHashMap[nextTable[i] & 0x00FFFFFF] = i;
+			i++;
+		}
+		blockStart = (uint8_t*)(&nextTable[i + 1]);
+	}
+
 	blockHeader = (GcxBlockHeader*)blockStart;
-	
 	resourceTable = (uint32_t*)&blockStart[blockHeader->resourceTableOffset];	
 	setNumResource();
 	decryptStringResources();

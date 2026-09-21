@@ -11,7 +11,7 @@
 
 class Decompiler {
 public:
-	Decompiler(const GcxProc& proc, std::string procName);
+	Decompiler(const GcxProc& proc, std::string procName, Gcx* gcx = nullptr);
 	~Decompiler();
 	void decompile();
 	void decompileResource(int size);
@@ -21,6 +21,7 @@ private:
 	int ptr = 0;
 	GcxProc procBuffer;
 	std::string procName;
+	Gcx* gcx = nullptr;
 	IndentationManager indentation;
 
 	bool isIf = false;

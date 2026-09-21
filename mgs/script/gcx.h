@@ -1,6 +1,7 @@
 #pragma once
 #include <fstream>
 #include <filesystem>
+#include <unordered_map>
 
 typedef uint8_t* GcxProc;
 
@@ -26,6 +27,9 @@ public:
 	int getResourceSize(int idx);
 	GcxProc getResource(int idx);
 	bool isScriptResource(int idx);
+	uint32_t getProcHash(int idx);
+	bool hasProcHashes();
+	int getProcIndexFromHash(uint32_t hash);
 private:
 	std::string filename = "scenerio.gcx";
 
@@ -33,6 +37,8 @@ private:
 	uint8_t* gcxData;
 	uint8_t* procStart;
 	int32_t* procTable;
+	uint32_t* hashTable = nullptr;
+	std::unordered_map<uint32_t, int> procHashMap;
 	int numResource = 0;
 	uint32_t* timestamp;
 	uint8_t* blockStart;

@@ -61,7 +61,7 @@ int64_t getAlignment(int64_t currentOffset, int64_t alignSize) {
 
 inline
 void writeDataToFile(uint8_t* data, int size, const std::string& filename, std::string& output) {
-	if (!std::filesystem::exists(output))
+	if (!output.empty() && !std::filesystem::exists(output))
 		std::filesystem::create_directories(output);
 
 	updateDir(filename, output);
@@ -73,7 +73,7 @@ void writeDataToFile(uint8_t* data, int size, const std::string& filename, std::
 
 inline
 void writeTextToFile(const std::stringstream& sstream, const std::string& filename, std::string& output) {
-	if (!std::filesystem::exists(output))
+	if (!output.empty() && !std::filesystem::exists(output))
 		std::filesystem::create_directories(output);
 
 	updateDir(filename, output);

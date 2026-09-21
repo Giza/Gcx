@@ -72,17 +72,18 @@ void CLI::compileFile() {
 }
 
 void CLI::decompileProcs(Gcx& gcx, const std::string& input, std::string& output) {
+	std::cerr << "Start decompile main..." << std::endl;
 	std::streambuf* cout_buff = std::cout.rdbuf();
 
 	std::stringstream decompiled;
 	std::cout.rdbuf(decompiled.rdbuf());
 
-	Decompiler main(gcx.getMainProc(), "main");
+	Decompiler main(gcx.getMainProc(), "main", &gcx);
 	main.decompile();
 
 	for (int i = 0; i < gcx.getNumProc(); i++) {
 		std::string name = "proc" + std::to_string(i + 1);
-		Decompiler decompiler(gcx.getProc(i), name);
+		Decompiler decompiler(gcx.getProc(i), name, &gcx);
 		decompiler.decompile();
 	}
 
